@@ -76,7 +76,7 @@ const AUTO_APPROVE_WRITE_TOOL_HINTS = [
  * directories or services. User-configured always-allow rules (explicit
  * consent) still win — see resolveToolAutoApprovalDecision.
  */
-const MANUAL_APPROVAL_TOOL_NAME_HINTS = [
+export const MANUAL_APPROVAL_TOOL_NAME_HINTS = [
     'preview_static',
     'preview_proxy',
     'preview_stop',
@@ -84,6 +84,12 @@ const MANUAL_APPROVAL_TOOL_NAME_HINTS = [
     'proxy local dev server',
     'unmount preview',
 ];
+
+/** True for tools whose effect is an outward-facing publication. */
+export function isManualApprovalToolName(toolName: string): boolean {
+    const lower = toolName.toLowerCase();
+    return MANUAL_APPROVAL_TOOL_NAME_HINTS.some((name) => lower.includes(name));
+}
 
 export function resolveToolAutoApprovalDecision(
     mode: PermissionMode | undefined,
@@ -109,7 +115,7 @@ export function resolveToolAutoApprovalDecision(
 
     // Publication is outward-facing: require a human decision even in
     // permissive modes, before any built-in mode approval can fire.
-    if (MANUAL_APPROVAL_TOOL_NAME_HINTS.some((name) => lowerTool.includes(name))) {
+    if (isManualApprovalToolName(lowerTool)) {
         return null;
     }
 
