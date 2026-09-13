@@ -67,6 +67,15 @@ let sessionArg = null
 if (rest.length > 0 && !isModeValue(rest[0])) {
     sessionArg = rest.shift()
 }
+// Explicit self tokens (`proxy self 5173`) resolve exactly like an omitted
+// selector: through $HAPI_SESSION_ID, with a clear error when unavailable.
+if (sessionArg !== null && SELF_TOKENS.has(sessionArg)) {
+    sessionArg = process.env.HAPI_SESSION_ID?.trim() || null
+    if (!sessionArg) {
+        console.error('cannot self-resolve session: $HAPI_SESSION_ID is not set. Pass an explicit <session-id-prefix>, or run inside a HAPI-wrapped agent session.')
+        process.exit(4)
+    }
+}
 if (sessionArg === null && process.env.HAPI_SESSION_ID) {
     sessionArg = process.env.HAPI_SESSION_ID
 }
