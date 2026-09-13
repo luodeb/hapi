@@ -83,10 +83,12 @@ export function createPreviewRoutes(deps: {
     // `Origin: null`. A non-credentialed wildcard CORS policy lets them load
     // their own modules and data while the sandbox keeps them isolated from
     // the hub UI's origin privileges. Capability = unguessable mountId.
+    // `Allow-Headers: *` keeps framework headers (next-action, rsc, ...)
+    // working without an enumeration that would grow forever.
     app.use('*', cors({
         origin: '*',
         allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowHeaders: ['authorization', 'content-type', 'last-event-id', 'range', 'if-none-match']
+        allowHeaders: ['*']
     }))
 
     // Enforce the body cap while the request streams in — a chunked upload
@@ -128,10 +130,13 @@ export function createPreviewRoutes(deps: {
             body = new Uint8Array(buffer)
         }
 
+        // Forward all end-to-end request headers (nginx default) — framework
+        // headers like `next-action` or `rsc` must reach the upstream
+        // unchanged. Hop-by-hop, host and identity headers are dropped by
+        // buildRequestMeta / stripHopByHopHeaders.
         const requestHeaders: Record<string, string> = {}
-        for (const name of ['accept', 'accept-encoding', 'accept-language', 'authorization', 'cache-control', 'content-type', 'cookie', 'if-none-match', 'if-modified-since', 'origin', 'pragma', 'range', 'referer', 'user-agent', 'x-forwarded-for', 'x-requested-with']) {
-            const value = c.req.header(name)
-            if (value !== undefined) requestHeaders[name] = value
+        for (const [name, value] of c.req.raw.headers.entries()) {
+            requestHeaders[name] = value
         }
 
         const meta = buildRequestMeta(c.req.method.toUpperCase(), url, mountId, rawPath, requestHeaders, body)

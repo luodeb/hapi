@@ -93,6 +93,19 @@ describe('preview routes', () => {
         expect(opened[0].headers['via']).toBe('hapi-preview')
     })
 
+    it('forwards framework end-to-end headers unchanged (next-action, rsc)', async () => {
+        const { deps, opened } = makeDeps()
+        await buildApp(deps).request(`${PREFIX}/`, {
+            method: 'POST',
+            headers: { 'next-action': 'abc123', 'rsc': '1', 'x-nextjs-data': '1' }
+        })
+
+        expect(opened).toHaveLength(1)
+        expect(opened[0].headers['next-action']).toBe('abc123')
+        expect(opened[0].headers['rsc']).toBe('1')
+        expect(opened[0].headers['x-nextjs-data']).toBe('1')
+    })
+
     it('rejects oversized request bodies locally with 413', async () => {
         const { deps, opened } = makeDeps()
         const body = new Uint8Array(1024 * 1024 + 1)
@@ -147,9 +160,14 @@ describe('preview routes', () => {
 
         const preflight = await buildApp(deps).request(`${PREFIX}/index.html`, {
             method: 'OPTIONS',
-            headers: { origin: 'null', 'access-control-request-method': 'GET' }
+            headers: {
+                origin: 'null',
+                'access-control-request-method': 'POST',
+                'access-control-request-headers': 'content-type, next-action, rsc'
+            }
         })
         expect(preflight.headers.get('access-control-allow-origin')).toBe('*')
+        expect(preflight.headers.get('access-control-allow-headers')).toBe('*')
     })
 
     it('answers 502 when the tunnel conn dies before a head', async () => {
