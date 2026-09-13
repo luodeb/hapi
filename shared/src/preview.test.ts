@@ -57,8 +57,10 @@ describe('stripHopByHopHeaders', () => {
 })
 
 describe('preview limits', () => {
-    it('caps ws messages below the socket.io transport limit', () => {
-        expect(PREVIEW_WS_MAX_MESSAGE_BYTES).toBeLessThan(48 * 1024 * 1024)
+    it('caps ws messages below the transport limit even with worst-case JSON escaping', () => {
+        // NUL characters expand 6× through JSON (\u0000); the serialized
+        // frame must stay under the hub's 48 MiB transport ceiling.
+        expect(PREVIEW_WS_MAX_MESSAGE_BYTES * 6).toBeLessThanOrEqual(48 * 1024 * 1024)
     })
 })
 
