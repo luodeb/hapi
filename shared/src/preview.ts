@@ -31,10 +31,10 @@ export const PREVIEW_FRAME_PAYLOAD_BYTES = 256 * 1024
  * Inbound upstream WebSocket message cap. Must stay below the hub's
  * socket.io transport limit (48 MiB) AFTER JSON serialization: escape-heavy
  * text (e.g. NUL → \u0000) expands up to 6×, so the worst-case serialized
- * frame is 8 MiB × 6 = 48 MiB. A single oversized ws-message frame would
+ * frame is 8 MiB × 6 = 48 MiB; the event envelope adds overhead on top, so the
  * otherwise disconnect the shared CLI↔hub connection.
  */
-export const PREVIEW_WS_MAX_MESSAGE_BYTES = 8 * 1024 * 1024
+export const PREVIEW_WS_MAX_MESSAGE_BYTES = 6 * 1024 * 1024
 export const PREVIEW_MAX_RESPONSE_HEADERS = 100
 export const PREVIEW_DEFAULT_TTL_SECONDS = 12 * 3600
 export const PREVIEW_MAX_TTL_SECONDS = 7 * 24 * 3600
