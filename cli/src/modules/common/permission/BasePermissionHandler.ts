@@ -69,6 +69,22 @@ const AUTO_APPROVE_WRITE_TOOL_HINTS = [
     ...SENSITIVE_TOOL_NAME_HINTS
 ];
 
+/**
+ * Publication tools always need an explicit human decision, in every mode:
+ * yolo/always-proceed/safe-yolo exist to auto-approve LOCAL work, while
+ * mounting a preview publishes a publicly readable capability URL for local
+ * directories or services. User-configured always-allow rules (explicit
+ * consent) still win — see resolveToolAutoApprovalDecision.
+ */
+const MANUAL_APPROVAL_TOOL_NAME_HINTS = [
+    'preview_static',
+    'preview_proxy',
+    'preview_stop',
+    'mount static preview',
+    'proxy local dev server',
+    'unmount preview',
+];
+
 export function resolveToolAutoApprovalDecision(
     mode: PermissionMode | undefined,
     toolName: string,
@@ -85,10 +101,19 @@ export function resolveToolAutoApprovalDecision(
     const lowerId = toolCallId.toLowerCase();
     const decisionForMode: AutoApprovalDecision = (mode === 'yolo' || mode === 'always-proceed') ? 'approved_for_session' : 'approved';
 
-    if (
-        AUTO_APPROVE_EXACT_TOOL_NAMES.has(lowerTool)
-        || rules.alwaysToolNameHints.some((name) => lowerTool.includes(name))
-    ) {
+    // User-configured always-allow rules are explicit consent and win over
+    // the publication gate below.
+    if (rules.alwaysToolNameHints.some((name) => lowerTool.includes(name))) {
+        return decisionForMode;
+    }
+
+    // Publication is outward-facing: require a human decision even in
+    // permissive modes, before any built-in mode approval can fire.
+    if (MANUAL_APPROVAL_TOOL_NAME_HINTS.some((name) => lowerTool.includes(name))) {
+        return null;
+    }
+
+    if (AUTO_APPROVE_EXACT_TOOL_NAMES.has(lowerTool)) {
         return decisionForMode;
     }
 

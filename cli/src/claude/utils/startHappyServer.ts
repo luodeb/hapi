@@ -443,7 +443,7 @@ function createHapiMcpServer(
         description: PREVIEW_PROXY_TOOL_DESCRIPTION,
         title: 'Proxy Local Dev Server',
         inputSchema: PreviewProxyToolArgsSchema as z.ZodTypeAny,
-    }, (async (args: { port?: number; url?: string; name?: string; ttlHours?: number; ws?: boolean }) => {
+    }, (async (args: { port?: number; url?: string; name?: string; ttlHours?: number; ws?: boolean; preservePath?: boolean }) => {
         logger.debug('[hapiMCP] preview_proxy:', args.port ?? args.url);
         return previewProxyTool(client, args);
     }) as any);

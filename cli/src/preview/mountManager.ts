@@ -31,6 +31,8 @@ export interface PreviewMount {
     port?: number
     url?: string
     ws: boolean
+    /** Forward the full /preview/<mountId>/ path to the upstream (basePath apps). */
+    preservePath?: boolean
     token?: string
     /** Public capability URL returned by the hub. */
     publicUrl: string
@@ -60,6 +62,7 @@ export interface MountProxyArgs {
     name?: string
     ttlHours?: number
     ws?: boolean
+    preservePath?: boolean
 }
 
 export interface StopArgs {
@@ -158,6 +161,7 @@ export class PreviewMountManager {
             name,
             ...(args.port !== undefined ? { port: args.port } : { url: args.url! }),
             ws: args.ws ?? true,
+            ...(args.preservePath ? { preservePath: true } : {}),
             ttlSeconds: this.ttlSeconds(args.ttlHours)
         }
         return this.registerNew(descriptor, existing)
@@ -231,6 +235,7 @@ export class PreviewMountManager {
             name: mount.name,
             ...(mount.kind === 'static' ? { rootPath: mount.rootPath! } : mount.port !== undefined ? { port: mount.port } : { url: mount.url! }),
             ws: mount.ws,
+            ...(mount.preservePath ? { preservePath: true } : {}),
             ...(mount.token ? { token: mount.token } : {}),
             ttlSeconds: Math.max(30, Math.min(Math.round((mount.expiresAt - Date.now()) / 1000), 7 * 24 * 3600))
         }
@@ -276,6 +281,7 @@ export class PreviewMountManager {
             port: descriptor.port,
             url: descriptor.url,
             ws: descriptor.ws ?? true,
+            preservePath: descriptor.preservePath,
             token: descriptor.token,
             publicUrl: ack.url,
             expiresAt: ack.expiresAt,

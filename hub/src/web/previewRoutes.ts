@@ -20,7 +20,7 @@ import type { PreviewRequestMeta, PreviewTunnel } from '../preview/previewTunnel
  * for LAN/relay visitors without hub accounts.
  */
 
-const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH'])
+const BODY_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE'])
 
 /**
  * Preview pages may contain untrusted HTML/JS (any mounted directory or dev

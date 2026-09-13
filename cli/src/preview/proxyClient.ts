@@ -49,17 +49,24 @@ function upstreamRequest(target: URL, options: RequestOptions) {
  * against the target: a leading `//` would be protocol-relative and replace
  * the approved loopback authority. Leading slashes are stripped and the result
  * is assigned as a plain path string.
+ *
+ * preservePath mounts (servers configured with basePath/base equal to the
+ * preview path) receive the full `/preview/<mountId>/…` route instead.
  */
-export function buildUpstreamRequestPath(path: string, query?: string): string {
+export function buildUpstreamRequestPath(mount: PreviewMount, path: string, query?: string): string {
     const clean = path.replace(/^\/+/, '')
-    return `/${clean}${query ? `?${query}` : ''}`
+    const base = mount.preservePath ? `preview/${mount.mountId}/` : ''
+    return `/${base}${clean}${query ? `?${query}` : ''}`
 }
 
 /** Same rule for WebSocket URLs — assign pathname on a copy of the target. */
-export function buildUpstreamWsUrl(target: URL, path: string, query?: string): URL {
+export function buildUpstreamWsUrl(target: URL, mount: PreviewMount, path: string, query?: string): URL {
     const wsUrl = new URL(target)
-    wsUrl.pathname = `/${path.replace(/^\/+/, '')}`
-    wsUrl.search = query ?? ''
+    const withQuery = buildUpstreamRequestPath(mount, path, query)
+    // Query must go through `search` — inside `pathname` the `?` gets escaped.
+    const qIndex = withQuery.indexOf('?')
+    wsUrl.pathname = qIndex === -1 ? withQuery : withQuery.slice(0, qIndex)
+    wsUrl.search = qIndex === -1 ? '' : withQuery.slice(qIndex)
     wsUrl.hash = ''
     wsUrl.protocol = target.protocol === 'https:' ? 'wss:' : 'ws:'
     return wsUrl
@@ -155,7 +162,7 @@ function serveProxyHttp(mount: PreviewMount, frame: PreviewOpenFrame, sink: Prev
 
     try {
         const headers = sanitizeRequestHeaders(frame, target)
-        upstream = upstreamRequest(target, { method, headers, path: buildUpstreamRequestPath(frame.path, frame.query) })
+        upstream = upstreamRequest(target, { method, headers, path: buildUpstreamRequestPath(mount, frame.path, frame.query) })
     } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
         sink.error(502, `Bad gateway: ${message}`)
@@ -263,7 +270,7 @@ function serveProxyHttp(mount: PreviewMount, frame: PreviewOpenFrame, sink: Prev
 }
 
 function serveProxyWs(mount: PreviewMount, frame: PreviewOpenFrame, sink: PreviewConnSink, target: URL): PreviewConnHandlers {
-    const wsUrl = buildUpstreamWsUrl(target, frame.path, frame.query)
+    const wsUrl = buildUpstreamWsUrl(target, mount, frame.path, frame.query)
     const protocols = parseWsProtocols(frame.protocols)
     let ws: WebSocket
     let closed = false

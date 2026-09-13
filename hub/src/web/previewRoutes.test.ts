@@ -105,6 +105,21 @@ describe('preview routes', () => {
         expect(opened).toHaveLength(0)
     })
 
+    it('forwards DELETE request bodies to the tunnel', async () => {
+        const { deps, opened } = makeDeps()
+        const response = await buildApp(deps).request(`${PREFIX}/items`, {
+            method: 'DELETE',
+            body: '{"ids":[1,2,3]}',
+            headers: { 'content-type': 'application/json' }
+        })
+
+        expect(response.status).toBe(200)
+        expect(opened).toHaveLength(1)
+        expect(opened[0].method).toBe('DELETE')
+        expect(new TextDecoder().decode(opened[0].body)).toBe('{"ids":[1,2,3]}')
+        expect(opened[0].headers['content-length']).toBe('15')
+    })
+
     it('enforces the body cap on chunked uploads without Content-Length', async () => {
         const { deps, opened } = makeDeps()
         const oversized = new ReadableStream<Uint8Array>({

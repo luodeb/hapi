@@ -30,7 +30,7 @@ function formatExpiry(mount: PreviewMount): string {
 function describeMount(mount: PreviewMount): string {
     const target = mount.kind === 'static'
         ? `Root: ${mount.rootPath} (read-only, files up to 25 MiB, no directory listing, dotfiles rejected)`
-        : `Target: ${mount.port !== undefined ? `http://127.0.0.1:${mount.port}` : mount.url}${mount.ws ? ' (WebSocket pass-through on)' : ' (WebSocket pass-through off)'}`
+        : `Target: ${mount.port !== undefined ? `http://127.0.0.1:${mount.port}` : mount.url}${mount.ws ? ' (WebSocket pass-through on)' : ' (WebSocket pass-through off)'}${mount.preservePath ? ' (full /preview/<mountId>/ path forwarded — basePath apps)' : ''}`
     return [
         `${mount.kind === 'static' ? 'Static' : 'Dev server'} preview mounted.`,
         `URL: ${mount.publicUrl}`,
@@ -66,7 +66,7 @@ export async function previewStaticTool(client: ApiSessionClient, args: { path?:
     }
 }
 
-export async function previewProxyTool(client: ApiSessionClient, args: { port?: number; url?: string; name?: string; ttlHours?: number; ws?: boolean }): Promise<PreviewToolContent> {
+export async function previewProxyTool(client: ApiSessionClient, args: { port?: number; url?: string; name?: string; ttlHours?: number; ws?: boolean; preservePath?: boolean }): Promise<PreviewToolContent> {
     if (args.port === undefined && args.url === undefined) {
         return textResult('Error: provide the dev server port (or a loopback url), e.g. {"port": 5173}', true)
     }
@@ -76,7 +76,8 @@ export async function previewProxyTool(client: ApiSessionClient, args: { port?: 
             url: args.url,
             name: args.name,
             ttlHours: args.ttlHours,
-            ws: args.ws
+            ws: args.ws,
+            preservePath: args.preservePath
         })
         postChatLink(client, mount)
         return textResult(describeMount(mount))

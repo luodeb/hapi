@@ -29,21 +29,40 @@ function frame(overrides: Partial<PreviewOpenFrame> = {}): PreviewOpenFrame {
 }
 
 describe('buildUpstreamRequestPath / buildUpstreamWsUrl', () => {
+    const mount: PreviewMount = {
+        mountId: '5f0c9a2e-1b3d-4e5f-8a9b-0c1d2e3f4a5b',
+        kind: 'proxy',
+        name: 'dev',
+        port: 5173,
+        ws: true,
+        publicUrl: '',
+        expiresAt: Date.now() + 1000,
+        createdAt: Date.now()
+    }
+
     it('never lets a leading // replace the approved loopback authority', () => {
         const target = new URL('http://127.0.0.1:5173')
 
-        const wsUrl = buildUpstreamWsUrl(target, '/192.168.1.10:8080/ws')
+        const wsUrl = buildUpstreamWsUrl(target, mount, '/192.168.1.10:8080/ws')
         expect(wsUrl.hostname).toBe('127.0.0.1')
         expect(wsUrl.port).toBe('5173')
         expect(wsUrl.pathname).toBe('/192.168.1.10:8080/ws')
         expect(wsUrl.protocol).toBe('ws:')
 
-        expect(buildUpstreamRequestPath('//192.168.1.10:8080/ws')).toBe('/192.168.1.10:8080/ws')
-        expect(buildUpstreamRequestPath('assets/app.js', 'v=2')).toBe('/assets/app.js?v=2')
+        expect(buildUpstreamRequestPath(mount, '//192.168.1.10:8080/ws')).toBe('/192.168.1.10:8080/ws')
+        expect(buildUpstreamRequestPath(mount, 'assets/app.js', 'v=2')).toBe('/assets/app.js?v=2')
+    })
+
+    it('strips the mount prefix by default and preserves it for basePath apps', () => {
+        expect(buildUpstreamRequestPath(mount, 'page')).toBe('/page')
+
+        const basePathMount: PreviewMount = { ...mount, preservePath: true }
+        expect(buildUpstreamRequestPath(basePathMount, 'page')).toBe(`/preview/${mount.mountId}/page`)
+        expect(buildUpstreamRequestPath(basePathMount, '', 'q=1')).toBe(`/preview/${mount.mountId}/?q=1`)
     })
 
     it('keeps the query and forces ws/wss from the target scheme', () => {
-        const wsUrl = buildUpstreamWsUrl(new URL('https://localhost:5173'), 'hmr', 'token=1')
+        const wsUrl = buildUpstreamWsUrl(new URL('https://localhost:5173'), mount, 'hmr', 'token=1')
         expect(wsUrl.toString()).toBe('wss://localhost:5173/hmr?token=1')
     })
 })

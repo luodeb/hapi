@@ -173,6 +173,12 @@ export const PreviewMountDescriptorSchema = z
         url: z.string().url().optional(),
         /** Proxy mounts only: pass WebSocket upgrades through (HMR). */
         ws: z.boolean().optional(),
+        /**
+         * Proxy mounts only: forward the full `/preview/<mountId>/…` path to
+         * the upstream instead of stripping the mount prefix — for servers
+         * configured with `basePath`/`base` equal to the preview path.
+         */
+        preservePath: z.boolean().optional(),
         /** Extra capability token checked against `?t=` on every request. */
         token: z.string().min(8).max(128).optional(),
         ttlSeconds: z.number().int().min(30).max(PREVIEW_MAX_TTL_SECONDS).optional(),
@@ -229,6 +235,7 @@ export const PreviewProxyToolArgsSchema = z.object({
     name: z.string().max(64).optional().describe('Short label for later unmounting; defaults to `port-<port>`.'),
     ttlHours: z.number().min(0.1).max(168).optional().describe('Hours until the URL expires (default 12, max 168).'),
     ws: z.boolean().optional().describe('Pass WebSocket upgrades through (HMR). Default true.'),
+    preservePath: z.boolean().optional().describe('Forward the full /preview/<mountId>/ path to the upstream — set true when the server is configured with basePath/base equal to the preview path. Default false (mount prefix is stripped).'),
 })
 
 export const PreviewStopToolArgsSchema = z.object({
