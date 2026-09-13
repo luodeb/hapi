@@ -142,7 +142,8 @@ export class PreviewRegistry {
         entry.rootPath = descriptor.rootPath
         entry.port = descriptor.port
         entry.url = descriptor.url
-        entry.ws = descriptor.ws ?? true
+        // Only proxy mounts may be upgraded; static entries default to off.
+        entry.ws = descriptor.kind === 'proxy' ? (descriptor.ws ?? true) : false
         entry.token = descriptor.token
         entry.lastSeenAt = now
         entry.expiresAt = now + ttlSeconds * 1000

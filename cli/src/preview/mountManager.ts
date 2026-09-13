@@ -126,6 +126,7 @@ export class PreviewMountManager {
             kind: 'static',
             name,
             rootPath,
+            ws: false,
             ttlSeconds: this.ttlSeconds(args.ttlHours)
         }
         return this.registerNew(descriptor, existing)

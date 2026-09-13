@@ -31,7 +31,10 @@ export function resolvePreviewUpgrade(
     const mountId = pathname.split('/')[2] ?? ''
     const entry = registry.get(mountId)
     if (!entry) return null
-    if (!entry.ws) return null
+    // Only proxy mounts speak WebSocket; static entries must not be upgraded
+    // (the CLI terminator would answer with HTTP frames and leave the socket
+    // untracked).
+    if (entry.kind !== 'proxy' || !entry.ws) return null
     if (!registry.checkToken(entry, url.searchParams.get('t'))) return null
     // Leading slashes stripped so `//host/x` can never become an authority.
     const rawPath = pathname.split('/').slice(3).join('/').replace(/^\/+/, '')

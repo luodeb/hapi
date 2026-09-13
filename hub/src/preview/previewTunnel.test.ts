@@ -235,6 +235,23 @@ describe('PreviewTunnel lifecycle (regressions)', () => {
         expect(tunnel.stats.conns).toBe(1)
     })
 
+    it('closes the browser socket with 1011 when a ws conn dies of an error', async () => {
+        const { ns, fake } = makeNamespace()
+        const tunnel = new PreviewTunnel(ns)
+        const conn = tunnel.openWs(makeEntry(), httpMeta())
+        const connId = (fake.framesToCli[0] as { connId: string }).connId
+
+        let closedWith: number | undefined
+        conn!.onClose((code) => {
+            closedWith = code
+        })
+
+        tunnel.handleFrame('sock-1', { type: 'error', connId, message: 'upstream died' })
+
+        expect(closedWith).toBe(1011)
+        expect(tunnel.stats.conns).toBe(0)
+    })
+
     it('cancels the CLI side with a close frame when the head deadline expires', async () => {
         const { ns, fake } = makeNamespace()
         const tunnel = new PreviewTunnel(ns, { openTimeoutMs: 50 })

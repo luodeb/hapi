@@ -70,6 +70,7 @@ interface ConnState {
     closed: boolean
     wsMessage: ((payload: string | Uint8Array, isText: boolean) => void) | null
     wsClose: ((code: number, reason?: string) => void) | null
+    wsCloseSent: boolean
     openTimer: ReturnType<typeof setTimeout> | null
 }
 
@@ -133,8 +134,9 @@ export class PreviewTunnel {
                 conn.wsMessage?.(frame.payload as string | Uint8Array, frame.isText === true)
                 break
             case 'ws-close':
+                // Deliver the CLI's real close code before the generic one.
+                this.invokeWsClose(conn, frame.code ?? 1005, frame.reason)
                 this.finishConn(conn)
-                conn.wsClose?.(frame.code ?? 1005, frame.reason)
                 break
             case 'close':
                 this.finishConn(conn)
@@ -237,10 +239,19 @@ export class PreviewTunnel {
     closeMount(mountId: string): void {
         for (const conn of [...this.conns.values()]) {
             if (conn.mountId !== mountId) continue
+            this.invokeWsClose(conn, 1001, 'Preview ended')
             this.closeConn(conn)
-            // WebSocket conns must also close toward the browser.
-            conn.wsClose?.(1001, 'Preview ended')
         }
+    }
+
+    /**
+     * Terminal failure on a ws conn must also close the browser socket —
+     * otherwise an upstream error leaves an upgraded, untracked socket open.
+     */
+    private invokeWsClose(conn: ConnState, code: number, reason?: string): void {
+        if (conn.wsCloseSent || !conn.wsClose) return
+        conn.wsCloseSent = true
+        conn.wsClose(code, reason)
     }
 
     get stats(): { conns: number } {
@@ -271,6 +282,7 @@ export class PreviewTunnel {
             closed: false,
             wsMessage: null,
             wsClose: null,
+            wsCloseSent: false,
             openTimer: null
         }
         this.conns.set(conn.connId, conn)
@@ -373,6 +385,11 @@ export class PreviewTunnel {
             conn.controller?.close()
         } catch {
             // Already closed.
+        }
+        // A ws conn dying for any other reason (CLI error, timeout, mount
+        // removal) still needs its browser socket closed.
+        if (conn.kind === 'ws') {
+            this.invokeWsClose(conn, 1011, 'Preview tunnel closed')
         }
         this.conns.delete(conn.connId)
     }
