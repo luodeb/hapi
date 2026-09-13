@@ -253,13 +253,13 @@ export const PREVIEW_SUBPATH_NOTE =
 export const PREVIEW_STATIC_TOOL_DESCRIPTION =
     'Mount a local directory as a read-only static web preview on the HAPI hub and get a clickable URL. ' +
     "Call it right after you create HTML pages, reports, charts or demos the user should open in a browser; pass the absolute directory that contains index.html (or the entry files). " +
-    'The URL is a capability link: anyone who has it can read the mounted files until it expires or preview_stop removes it, so mounting requires user approval. ' +
+    'The URL is a capability link: anyone who has it can read the mounted files until it expires or preview_stop removes it, so mounting prompts for user approval under standard permission modes (permission-bypass launches such as --yolo approve automatically, like any other tool). ' +
     'Files are served as-is (no directory listing, 25 MiB per file, dotfiles rejected); for apps that assume they run at "/" prefer build-time base configuration over absolute paths.'
 
 export const PREVIEW_PROXY_TOOL_DESCRIPTION =
     'Reverse-proxy a local dev server (vite/next/django, ...) onto the HAPI hub so its UI can be opened in a browser through the hub port. ' +
     'Call it after starting the server on 127.0.0.1 (loopback only — never bind or proxy non-loopback hosts); pass the port, or url for a full loopback URL. ' +
-    'WebSocket pass-through (HMR) is on by default. Like preview_static, the returned URL is a capability link readable by anyone who obtains it until it expires or preview_stop removes it, so mounting requires user approval.'
+    'WebSocket pass-through (HMR) is on by default. Like preview_static, the returned URL is a capability link readable by anyone who obtains it until it expires or preview_stop removes it, so mounting prompts for user approval under standard permission modes (permission-bypass launches such as --yolo approve automatically, like any other tool).'
 
 export const PREVIEW_STOP_TOOL_DESCRIPTION =
     'Unmount one or all previews previously created with preview_static/preview_proxy in this session; mounted URLs immediately stop working (410 after a short grace period). ' +
