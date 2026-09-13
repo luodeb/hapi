@@ -27,6 +27,12 @@ export const PREVIEW_MAX_REQUEST_BODY_BYTES = 1024 * 1024
 export const PREVIEW_MAX_RESPONSE_BUFFER_BYTES = 8 * 1024 * 1024
 export const PREVIEW_RESUME_BUFFER_BYTES = 2 * 1024 * 1024
 export const PREVIEW_FRAME_PAYLOAD_BYTES = 256 * 1024
+/**
+ * Inbound upstream WebSocket message cap. Must stay below the hub's
+ * socket.io transport limit (48 MiB): a single oversized ws-message frame
+ * would otherwise disconnect the shared CLI↔hub connection.
+ */
+export const PREVIEW_WS_MAX_MESSAGE_BYTES = 16 * 1024 * 1024
 export const PREVIEW_MAX_RESPONSE_HEADERS = 100
 export const PREVIEW_DEFAULT_TTL_SECONDS = 12 * 3600
 export const PREVIEW_MAX_TTL_SECONDS = 7 * 24 * 3600

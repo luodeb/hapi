@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'bun:test'
 import {
     PREVIEW_MAX_REQUEST_BODY_BYTES,
+    PREVIEW_WS_MAX_MESSAGE_BYTES,
     PreviewFrameSchema,
     PreviewMountDescriptorSchema,
     PreviewRegisterAckSchema,
@@ -52,6 +53,12 @@ describe('stripHopByHopHeaders', () => {
             'Transfer-Encoding': 'chunked'
         })
         expect(stripped).toEqual({ host: '127.0.0.1:5173', 'content-type': 'application/json' })
+    })
+})
+
+describe('preview limits', () => {
+    it('caps ws messages below the socket.io transport limit', () => {
+        expect(PREVIEW_WS_MAX_MESSAGE_BYTES).toBeLessThan(48 * 1024 * 1024)
     })
 })
 

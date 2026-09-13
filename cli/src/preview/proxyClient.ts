@@ -5,6 +5,7 @@ import { WebSocket } from 'ws'
 import {
     PREVIEW_IDLE_TIMEOUT_MS,
     PREVIEW_OPEN_TIMEOUT_MS,
+    PREVIEW_WS_MAX_MESSAGE_BYTES,
     stripHopByHopHeaders,
     type PreviewOpenFrame,
     type PreviewResponseHeaders
@@ -25,7 +26,13 @@ import type { PreviewMount } from './mountManager'
  */
 
 const HTML_REWRITE_LIMIT = 2 * 1024 * 1024
-const WS_MAX_PAYLOAD = 64 * 1024 * 1024
+/**
+ * Inbound upstream message cap. The ws client enforces it and closes the
+ * conn with 1009 — an oversized frame must never reach the shared session
+ * socket, whose transport ceiling (48 MiB) it would exceed and take down
+ * chat/permissions with it.
+ */
+const WS_MAX_PAYLOAD = PREVIEW_WS_MAX_MESSAGE_BYTES
 /** Aggregate browser bytes buffered while the upstream WS handshake pends. */
 const WS_HANDSHAKE_QUEUE_BYTES = 1024 * 1024
 
