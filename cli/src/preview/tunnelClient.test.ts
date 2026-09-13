@@ -234,4 +234,20 @@ describe('PreviewMountManager', () => {
         expect(descriptor.ttlSeconds).toBeUndefined()
         expect(again.expiresAt).toBeGreaterThan(Date.now() + 3600_000)
     })
+
+    it('applies explicitly supplied proxy options on remount (same mountId)', async () => {
+        const manager = new PreviewMountManager(socket.adapter)
+        const first = await manager.mountProxy({ port: 5173, name: 'dev' })
+        expect(first.ws).toBe(true)
+        expect(first.preservePath).toBeUndefined()
+
+        const remounted = await manager.mountProxy({ port: 5173, name: 'dev', ws: false, preservePath: true })
+
+        expect(remounted.mountId).toBe(first.mountId)
+        expect(remounted.ws).toBe(false)
+        expect(remounted.preservePath).toBe(true)
+        const descriptor = socket.registered.at(-1) as { ws?: boolean; preservePath?: boolean }
+        expect(descriptor.ws).toBe(false)
+        expect(descriptor.preservePath).toBe(true)
+    })
 })

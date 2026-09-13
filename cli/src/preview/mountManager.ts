@@ -153,7 +153,7 @@ export class PreviewMountManager {
                 ? existing.port === args.port
                 : existing.url === args.url)
         if (sameTarget && existing) {
-            return this.refresh(existing, args.ttlHours)
+            return this.refresh(existing, args.ttlHours, { ws: args.ws, preservePath: args.preservePath })
         }
         const descriptor: PreviewMountDescriptor = {
             mountId: randomUUID(),
@@ -241,19 +241,32 @@ export class PreviewMountManager {
         }
     }
 
-    private async refresh(mount: PreviewMount, ttlHours: number | undefined): Promise<PreviewMount> {
+    private async refresh(
+        mount: PreviewMount,
+        ttlHours: number | undefined,
+        proxyOverrides?: { ws?: boolean; preservePath?: boolean }
+    ): Promise<PreviewMount> {
         // An explicit remount is a fresh tool call: apply the requested (or
         // documented default) TTL instead of quietly retaining whatever
         // remaining lifetime the old registration had — reconnects keep that
-        // remaining-lifetime behavior, tool calls do not.
+        // remaining-lifetime behavior, tool calls do not. Explicitly supplied
+        // proxy options likewise replace the old ones.
         const descriptor = this.descriptorOf(mount)
         descriptor.ttlSeconds = this.ttlSeconds(ttlHours)
+        if (proxyOverrides?.ws !== undefined) {
+            descriptor.ws = proxyOverrides.ws
+        }
+        if (proxyOverrides?.preservePath !== undefined) {
+            descriptor.preservePath = proxyOverrides.preservePath || undefined
+        }
         const ack = await this.registerDescriptor(descriptor)
         if (!ack?.ok) {
             throw new Error(this.ackError(ack))
         }
         mount.publicUrl = ack.url
         mount.expiresAt = ack.expiresAt
+        mount.ws = descriptor.ws ?? true
+        mount.preservePath = descriptor.preservePath
         return mount
     }
 
