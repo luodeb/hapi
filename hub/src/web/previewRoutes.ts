@@ -98,7 +98,7 @@ export function createPreviewRoutes(deps: {
         onError: (c) => c.text('Preview request body too large', 413)
     }))
 
-    const handle = async (c: { req: { method: string; url: string; header: (name: string) => string | undefined; arrayBuffer: () => Promise<ArrayBuffer> } }): Promise<Response> => {
+    const handle = async (c: { req: { method: string; url: string; raw: Request; header: (name: string) => string | undefined; arrayBuffer: () => Promise<ArrayBuffer> } }): Promise<Response> => {
         const url = new URL(c.req.url)
         const parts = url.pathname.split('/')
         // pathname is `/preview/<mountId>[/<sub...>]`. Leading slashes are
