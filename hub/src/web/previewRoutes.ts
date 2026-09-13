@@ -84,11 +84,13 @@ export function createPreviewRoutes(deps: {
     // their own modules and data while the sandbox keeps them isolated from
     // the hub UI's origin privileges. Capability = unguessable mountId.
     // `Allow-Headers: *` keeps framework headers (next-action, rsc, ...)
-    // working without an enumeration that would grow forever.
+    // working without an enumeration that would grow forever. Authorization
+    // is a non-wildcard request-header name in the fetch spec and needs an
+    // explicit entry.
     app.use('*', cors({
         origin: '*',
         allowMethods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-        allowHeaders: ['*']
+        allowHeaders: ['*', 'authorization']
     }))
 
     // Enforce the body cap while the request streams in — a chunked upload

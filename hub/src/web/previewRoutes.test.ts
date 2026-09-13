@@ -163,11 +163,14 @@ describe('preview routes', () => {
             headers: {
                 origin: 'null',
                 'access-control-request-method': 'POST',
-                'access-control-request-headers': 'content-type, next-action, rsc'
+                // Authorization is a non-wildcard request-header name — it must
+                // be listed explicitly alongside the wildcard.
+                'access-control-request-headers': 'authorization, content-type, next-action, rsc'
             }
         })
         expect(preflight.headers.get('access-control-allow-origin')).toBe('*')
-        expect(preflight.headers.get('access-control-allow-headers')).toBe('*')
+        expect(preflight.headers.get('access-control-allow-headers')).toContain('*')
+        expect(preflight.headers.get('access-control-allow-headers')).toContain('authorization')
     })
 
     it('answers 502 when the tunnel conn dies before a head', async () => {
